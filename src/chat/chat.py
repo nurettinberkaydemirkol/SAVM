@@ -1,4 +1,5 @@
 import model.model_provider as model_provider
+import generate_lora.generate_lora as generate_lora
 
 model, tokenizer = model_provider.get_model_and_tokenizer()
 
@@ -23,3 +24,5 @@ generated = tokenizer.decode(full_output[prompt_len:], skip_special_tokens=True)
 answer = generated.split("Human:")[0].strip()
 
 print(f"Answer: {answer}")
+
+generate_lora(data_file="/Users/berkaydemirkol/Documents/GitHub/SAVM/data.jsonl", output_dir="./lora")

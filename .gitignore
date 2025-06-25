@@ -1,7 +1,6 @@
 .env
-Qwen
-QwenBacklog
+ai_models
 structured_json_outputs.jsonl
 */__pycache__
-data.jsonl
-lora
+lora_files
+synthetic_data_cluster

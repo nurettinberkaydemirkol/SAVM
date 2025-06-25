@@ -5,7 +5,7 @@ model, tokenizer = model_provider.get_model_and_tokenizer()
 
 num_examples = 100
 topic = "Machine Learning basics"
-output_file = "structured_json_outputs.jsonl"
+output_file = "data.jsonl"
 
 with open(output_file, "w", encoding="utf-8") as f:
     for idx in range(1, num_examples + 1):

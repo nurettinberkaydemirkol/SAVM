@@ -3,10 +3,10 @@ from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 from peft import LoraConfig, get_peft_model
 
-def train_lora_from_jsonl(
+def generate_lora(
     data_file,
     base_model="gpt2",
-    output_dir="./lora_adapter",
+    output_dir="./lora",
     epochs=10,
     batch_size=2,
     max_length=128,
