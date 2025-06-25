@@ -1,34 +1,34 @@
-import os
 import json
 from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 from peft import LoraConfig, get_peft_model
 
-def load_jsonl(path):
-    data = []
-    with open(path, 'r', encoding='utf-8') as f:
-        for line in f:
-            obj = json.loads(line.strip())
-            text = obj.get('prompt', '')
-            inp = obj.get('input', '')
-            ans = obj.get('answer', '')
-            full_text = text + ('\n' + inp if inp else '') + ('\n' + ans if ans else '')
-            data.append({'text': full_text})
-    return data
-
-def train_lora(
-    base_model="sshleifer/tiny-gpt2",
-    data_file="data.jsonl",
+def train_lora_from_jsonl(
+    data_file,
+    base_model="gpt2",
     output_dir="./lora_adapter",
-    epochs=100,
+    epochs=10,
     batch_size=2,
     max_length=128,
     lora_r=4,
     lora_alpha=8,
     lora_dropout=0.05,
+    target_modules=["c_attn", "c_proj"]
 ):
-    raw = load_jsonl(data_file)
-    dataset = Dataset.from_list(raw)
+    def load_jsonl(path):
+        data = []
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                obj = json.loads(line.strip())
+                text = obj.get('prompt', '')
+                inp = obj.get('input', '')
+                ans = obj.get('answer', '')
+                full_text = text + ('\n' + inp if inp else '') + ('\n' + ans if ans else '')
+                data.append({'text': full_text})
+        return data
+
+    raw_data = load_jsonl(data_file)
+    dataset = Dataset.from_list(raw_data)
 
     tokenizer = AutoTokenizer.from_pretrained(base_model)
     tokenizer.pad_token = tokenizer.eos_token
@@ -43,7 +43,7 @@ def train_lora(
         r=lora_r,
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
-        target_modules=["c_attn", "c_proj"],  # tiny-gpt2 için bu modüller var
+        target_modules=target_modules,
     )
     model = get_peft_model(model, peft_config)
 
@@ -63,7 +63,7 @@ def train_lora(
             'labels': labels
         }
 
-    tokenized = dataset.map(tokenize_fn, remove_columns=['text'])
+    tokenized_dataset = dataset.map(tokenize_fn, remove_columns=['text'])
 
     training_args = TrainingArguments(
         output_dir=output_dir,
@@ -77,15 +77,9 @@ def train_lora(
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized,
+        train_dataset=tokenized_dataset,
     )
 
     trainer.train()
     model.save_pretrained(output_dir)
     print(f"LoRA adapter saved to {output_dir}")
-
-if __name__ == "__main__":
-    train_lora(
-        data_file="/Users/berkaydemirkol/Documents/GitHub/SAVM/data.jsonl", 
-        output_dir="./lora"
-    )
