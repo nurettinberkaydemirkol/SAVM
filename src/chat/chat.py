@@ -1,5 +1,6 @@
 import providers.model_provider as model_provider
 import generate_lora.generate_lora as generate_lora
+import generate_synthetic.generate_synthetic_data as generate_synthetic
 import chat.embed as embed
 from providers.vector_db_provider import VectorDatabaseProvider
 import uuid
@@ -9,6 +10,8 @@ id = str(uuid.uuid4())
 
 # embeds it, and stores it in a vector database.
 db = VectorDatabaseProvider()
+
+db.load_from_file("./vector_db")
 
 # Generate a question using the model
 model, tokenizer = model_provider.get_model_and_tokenizer()
@@ -23,6 +26,7 @@ question_vector = embed.create_vector(question)
 
 # search vector
 k_near_lora_files = db.search(query_vector=question_vector.tolist(), k=5)
+print("k-nearest lora files:")
 print(k_near_lora_files)
 
 # Generate the answer
@@ -45,8 +49,10 @@ answer = generated.split("Human:")[0].strip()
 
 print(f"Answer: {answer}")
 
+generate_synthetic.generate_synthetic_data(question, 10, output_path=f'/Users/berkaydemirkol/Documents/GitHub/SAVM/synthetic_data_cluster/data-{id}.jsonl')
+
 generated_lora_file = generate_lora.generate_lora(
-    data_file="/Users/berkaydemirkol/Documents/GitHub/SAVM/synthetic_data_cluster/data.jsonl",
+    data_file=f'/Users/berkaydemirkol/Documents/GitHub/SAVM/synthetic_data_cluster/data-{id}.jsonl',
     output_dir=f'../lora_files/lora-{id}'
 )
 
@@ -54,6 +60,7 @@ print("question vector:", question_vector)
 
 vector_np = question_vector.squeeze(0).detach().cpu().numpy()
 db.add_or_update(id, vector_np, generated_lora_file)
+db.save_to_file("./vector_db")
 
 ALL_VECTOR_LIST = db.list_ids()
 print(ALL_VECTOR_LIST)

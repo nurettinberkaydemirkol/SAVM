@@ -1,5 +1,7 @@
 import faiss
 import numpy as np
+import pickle
+import os
 
 class VectorDatabaseProvider:
     def __init__(self):
@@ -75,3 +77,27 @@ class VectorDatabaseProvider:
 
     def list_ids(self):
         return list(self.data.keys())
+
+    def save_to_file(self, folder_path):
+        os.makedirs(folder_path, exist_ok=True)
+        if self.index:
+            faiss.write_index(self.index, os.path.join(folder_path, "faiss.index"))
+        meta = {
+            "dim": self.dim,
+            "data": self.data,
+            "id_order": self.id_order
+        }
+        with open(os.path.join(folder_path, "meta.pkl"), "wb") as f:
+            pickle.dump(meta, f)
+
+    def load_from_file(self, folder_path):
+        index_path = os.path.join(folder_path, "faiss.index")
+        meta_path = os.path.join(folder_path, "meta.pkl")
+
+        if os.path.exists(index_path) and os.path.exists(meta_path):
+            self.index = faiss.read_index(index_path)
+            with open(meta_path, "rb") as f:
+                meta = pickle.load(f)
+                self.dim = meta["dim"]
+                self.data = meta["data"]
+                self.id_order = meta["id_order"]

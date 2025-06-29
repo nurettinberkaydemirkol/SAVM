@@ -27,4 +27,4 @@ def get_model_and_tokenizer():
         )
         print("Model ready.")
         
-        return model, tokenizer
+    return model, tokenizer

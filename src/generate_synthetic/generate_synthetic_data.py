@@ -3,7 +3,7 @@ import os
 import providers.model_provider as model_provider
 from datetime import datetime
 
-def generate_qa_dataset(topic="Machine Learning basics", num_examples=10, output_path=None):
+def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, output_path=None):
     model, tokenizer = model_provider.get_model_and_tokenizer()
 
     if output_path is None:
