@@ -7,7 +7,7 @@ def generate_lora(
     data_file,
     base_model="gpt2",
     output_dir="./lora",
-    epochs=10,
+    epochs=1,
     batch_size=2,
     max_length=128,
     lora_r=4,
@@ -83,3 +83,5 @@ def generate_lora(
     trainer.train()
     model.save_pretrained(output_dir)
     print(f"LoRA adapter saved to {output_dir}")
+    
+    return output_dir

@@ -5,20 +5,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_model = None
-_tokenizer = None
+model = None
+tokenizer = None
 
 def get_model_and_tokenizer():
-    global _model, _tokenizer
-    if _model is None or _tokenizer is None:
-        local_model_path = os.getenv("LLM_MODEL_PATH")
+    global model, tokenizer
+    if model is None or tokenizer is None:
+        local_model_path = "/Users/berkaydemirkol/Documents/GitHub/SAVM/ai_models/Qwen"
+        print(local_model_path)
 
         print("Tokenizer loading...")
-        _tokenizer = AutoTokenizer.from_pretrained(local_model_path, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(local_model_path, trust_remote_code=True)
         print("Tokenizer ready.")
 
         print("Model loading...")
-        _model = AutoModelForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             local_model_path,
             trust_remote_code=True,
             torch_dtype=torch.float16,
@@ -26,4 +27,4 @@ def get_model_and_tokenizer():
         )
         print("Model ready.")
         
-        return _model, _tokenizer
+        return model, tokenizer
