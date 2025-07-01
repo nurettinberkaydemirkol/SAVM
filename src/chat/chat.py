@@ -29,12 +29,13 @@ inputs = {k: v.to(model.device) for k, v in inputs.items()}
 question_vector = embed.create_vector(question)
 
 # search vector
-k_near_lora_files = db.search(query_vector=question_vector.tolist(), k=5)
+k_near_lora_files = db.search(query_vector=question_vector.tolist(), k=3)
 print("k-nearest lora files:")
 print(k_near_lora_files)
 
 print("\n=== Merged Ensemble ===")
 try:
+    local_model_path = "distilgpt2"
     ensemble_model, tokenizer = create_ensemble_model_from_search_results(k_near_lora_files)
     answer = generate_with_ensemble(question)
     print(f"Ensemble Answer: {answer}")

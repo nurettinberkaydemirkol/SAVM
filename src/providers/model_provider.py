@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import os
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ def get_model_and_tokenizer():
         model = AutoModelForCausalLM.from_pretrained(
             local_model_path,
             trust_remote_code=True,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32,
             device_map="auto"
         )
         print("Model ready.")

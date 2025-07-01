@@ -4,6 +4,7 @@ import torch
 import os
 from dotenv import load_dotenv
 import copy
+import traceback  # Added for error handling
 
 load_dotenv()
 
@@ -14,17 +15,16 @@ base_model = None
 def get_model_and_tokenizer():
     global model, tokenizer, base_model
     if model is None or tokenizer is None:
-        local_model_path = "/Users/berkaydemirkol/Documents/GitHub/SAVM/ai_models/Qwen"
+        local_model_path = "distilgpt2"
         print(local_model_path)
 
         print("Tokenizer loading...")
-        tokenizer = AutoTokenizer.from_pretrained(local_model_path, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(local_model_path)
         print("Tokenizer ready.")
 
         print("Base model loading...")
         base_model = AutoModelForCausalLM.from_pretrained(
             local_model_path,
-            trust_remote_code=True,
             torch_dtype=torch.float32,
             device_map="auto"
         )
@@ -39,9 +39,14 @@ def load_multiple_loras(lora_paths, base_model=None):
         base_model, _ = get_model_and_tokenizer()
         base_model = globals()['base_model']
     
-    merged_model = copy.deepcopy(base_model)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    merged_model.to(device)
+    local_model_path = "distilgpt2"
+    merged_model = AutoModelForCausalLM.from_pretrained(
+        local_model_path,
+        torch_dtype=torch.float32,
+        device_map="auto"
+    )
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu"))
     
     for i, lora_path in enumerate(lora_paths):
         if not os.path.exists(lora_path):
@@ -60,12 +65,12 @@ def load_multiple_loras(lora_paths, base_model=None):
             
             # Merge the adapter weights
             merged_model = lora_model.merge_and_unload()
-            merged_model.to(device)
             
             print(f"Successfully merged LoRA: {lora_path}")
         
         except Exception as e:
             print(f"Error loading LoRA {lora_path}: {e}")
+            traceback.print_exc()
             continue
 
     return merged_model
@@ -151,10 +156,10 @@ def create_sequential_ensemble(search_results, question):
                 
                 outputs = lora_model.generate(
                     **inputs,
-                    max_new_tokens=50,
+                    max_new_tokens=150,
                     do_sample=True,
-                    temperature=0.8,
-                    top_k=40,
+                    temperature=0.9,
+                    top_k=50,
                     pad_token_id=tokenizer.eos_token_id,
                     eos_token_id=tokenizer.eos_token_id,
                 )

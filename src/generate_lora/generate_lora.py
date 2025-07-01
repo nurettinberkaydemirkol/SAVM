@@ -7,7 +7,7 @@ def generate_lora(
     data_file,
     base_model="gpt2",
     output_dir="./lora",
-    epochs=1,
+    epochs=4,
     batch_size=2,
     max_length=128,
     lora_r=4,
