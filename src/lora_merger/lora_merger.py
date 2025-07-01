@@ -97,7 +97,7 @@ def create_ensemble_model_from_search_results(search_results):
     
     return merged_model, tokenizer
 
-def generate_with_ensemble(question, max_new_tokens=50):
+def generate_with_ensemble(question, max_new_tokens=150):
     """
     Generate answer using the ensemble model
     """
@@ -106,7 +106,10 @@ def generate_with_ensemble(question, max_new_tokens=50):
     if model is None or tokenizer is None:
         raise ValueError("Model not loaded. Call create_ensemble_model_from_search_results first.")
     
-    inputs = tokenizer(question, return_tensors="pt")
+    # Create a better prompt format with instruction
+    prompt = f"Instruction: Answer the following question with a clear, factual response.\n\nQuestion: {question}\nAnswer:"
+    
+    inputs = tokenizer(prompt, return_tensors="pt")
     inputs = {k: v.to(model.device) for k, v in inputs.items()}
     
     prompt_len = inputs["input_ids"].shape[-1]
@@ -115,15 +118,32 @@ def generate_with_ensemble(question, max_new_tokens=50):
         **inputs,
         max_new_tokens=max_new_tokens,
         do_sample=True,
-        temperature=0.8,
-        top_k=40,
+        temperature=0.1,  # Very low temperature for factual responses
+        top_k=10,         # Very low top_k for focused sampling
+        top_p=0.8,        # Lower top_p for better quality
+        repetition_penalty=1.3,  # Strong repetition penalty
+        no_repeat_ngram_size=3,  # Prevent repetition of 3-grams
         pad_token_id=tokenizer.eos_token_id,
         eos_token_id=tokenizer.eos_token_id,
+        early_stopping=True,     # Stop when EOS token is generated
     )
     
     full_output = outputs[0]
     generated = tokenizer.decode(full_output[prompt_len:], skip_special_tokens=True)
-    answer = generated.split("Human:")[0].strip()
+    
+    # Clean up the response
+    answer = generated.strip()
+    # Remove any remaining prompt artifacts
+    if "Question:" in answer:
+        answer = answer.split("Question:")[0].strip()
+    if "Answer:" in answer:
+        answer = answer.split("Answer:")[0].strip()
+    if "Instruction:" in answer:
+        answer = answer.split("Instruction:")[0].strip()
+    
+    # Ensure the answer ends with proper punctuation
+    if answer and not answer.endswith(('.', '!', '?')):
+        answer = answer + '.'
     
     return answer
 
@@ -149,7 +169,9 @@ def create_sequential_ensemble(search_results, question):
                     torch_dtype=torch.float32
                 )
                 
-                inputs = tokenizer(question, return_tensors="pt")
+                # Create better prompt format with instruction
+                prompt = f"Instruction: Answer the following question with a clear, factual response.\n\nQuestion: {question}\nAnswer:"
+                inputs = tokenizer(prompt, return_tensors="pt")
                 inputs = {k: v.to(lora_model.device) for k, v in inputs.items()}
                 
                 prompt_len = inputs["input_ids"].shape[-1]
@@ -158,15 +180,31 @@ def create_sequential_ensemble(search_results, question):
                     **inputs,
                     max_new_tokens=150,
                     do_sample=True,
-                    temperature=0.9,
-                    top_k=50,
+                    temperature=0.1,  # Very low temperature for factual responses
+                    top_k=10,         # Very low top_k for focused sampling
+                    top_p=0.8,        # Lower top_p for better quality
+                    repetition_penalty=1.3,  # Strong repetition penalty
+                    no_repeat_ngram_size=3,  # Prevent repetition of 3-grams
                     pad_token_id=tokenizer.eos_token_id,
                     eos_token_id=tokenizer.eos_token_id,
+                    early_stopping=True,     # Stop when EOS token is generated
                 )
                 
                 full_output = outputs[0]
                 generated = tokenizer.decode(full_output[prompt_len:], skip_special_tokens=True)
-                answer = generated.split("Human:")[0].strip()
+                
+                # Clean up the response
+                answer = generated.strip()
+                if "Question:" in answer:
+                    answer = answer.split("Question:")[0].strip()
+                if "Answer:" in answer:
+                    answer = answer.split("Answer:")[0].strip()
+                if "Instruction:" in answer:
+                    answer = answer.split("Instruction:")[0].strip()
+                
+                # Ensure the answer ends with proper punctuation
+                if answer and not answer.endswith(('.', '!', '?')):
+                    answer = answer + '.'
                 
                 answers.append(answer)
                 

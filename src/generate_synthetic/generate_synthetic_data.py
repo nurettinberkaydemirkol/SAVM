@@ -13,7 +13,8 @@ def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, ou
 
     with open(output_path, "w", encoding="utf-8") as f:
         for idx in range(1, num_examples + 1):
-            question_prompt = f"Write a short question about the topic: {topic}"
+            # Better prompt for question generation
+            question_prompt = f"Generate a clear, factual question about: {topic}. The question should be specific and answerable. Question:"
             inputs = tokenizer(question_prompt, return_tensors="pt")
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
@@ -21,17 +22,27 @@ def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, ou
 
             outputs = model.generate(
                 **inputs,
-                max_new_tokens=50,
+                max_new_tokens=30,
                 do_sample=True,
-                temperature=0.8,
-                top_k=40
+                temperature=0.3,  # Lower temperature for more focused questions
+                top_k=20,         # Lower top_k for better quality
+                top_p=0.9,        # Add top_p for better sampling
+                repetition_penalty=1.1,  # Prevent repetition
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id,
             )
 
             full_output = outputs[0]
             generated = tokenizer.decode(full_output[prompt_len:], skip_special_tokens=True)
-            question = generated.split("Human:")[0].strip()
+            question = generated.split("Question:")[0].strip()
+            
+            # Clean up question
+            if question.endswith("?"):
+                question = question[:-1].strip()
+            question = question + "?"
 
-            answer_prompt = f"Answer briefly and clearly: {question}"
+            # Better prompt for answer generation
+            answer_prompt = f"Provide a clear, factual, and concise answer to this question: {question}\nAnswer:"
             inputs = tokenizer(answer_prompt, return_tensors="pt")
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
@@ -39,20 +50,30 @@ def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, ou
 
             outputs = model.generate(
                 **inputs,
-                max_new_tokens=100,
+                max_new_tokens=80,
                 do_sample=True,
-                temperature=0.8,
-                top_k=40
+                temperature=0.2,  # Very low temperature for factual answers
+                top_k=15,         # Lower top_k for more focused answers
+                top_p=0.85,       # Lower top_p for better quality
+                repetition_penalty=1.2,  # Stronger repetition penalty
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id,
             )
 
             full_output = outputs[0]
             generated = tokenizer.decode(full_output[prompt_len:], skip_special_tokens=True)
-            answer = generated.split("Human:")[0].strip()
+            answer = generated.split("Answer:")[0].strip()
+            
+            # Clean up answer
+            if answer.endswith("."):
+                answer = answer[:-1].strip()
+            answer = answer + "."
 
             print(f"[{idx}] Q: {question}\n    A: {answer}")
 
+            # Create proper training format with clear instruction
             json_obj = {
-                "prompt": question,
+                "prompt": f"Question: {question}\nAnswer:",
                 "answer": answer
             }
 

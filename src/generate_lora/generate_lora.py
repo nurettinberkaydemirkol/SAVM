@@ -7,13 +7,13 @@ def generate_lora(
     data_file,
     base_model="gpt2",
     output_dir="./lora",
-    epochs=4,
+    epochs=5,
     batch_size=2,
-    max_length=128,
-    lora_r=4,
-    lora_alpha=8,
+    max_length=512,
+    lora_r=16,
+    lora_alpha=32,
     lora_dropout=0.05,
-    target_modules=["c_attn", "c_proj"]
+    target_modules=["c_attn", "c_proj", "c_fc", "c_proj"]
 ):
     def load_jsonl(path):
         data = []
@@ -44,6 +44,7 @@ def generate_lora(
         lora_alpha=lora_alpha,
         lora_dropout=lora_dropout,
         target_modules=target_modules,
+        bias="none",  # Don't train bias terms
     )
     model = get_peft_model(model, peft_config)
 
@@ -69,9 +70,16 @@ def generate_lora(
         output_dir=output_dir,
         per_device_train_batch_size=batch_size,
         num_train_epochs=epochs,
-        logging_steps=5,
+        logging_steps=10,
         save_strategy='no',
         optim='adamw_torch',
+        learning_rate=1e-4,  # Slightly higher learning rate for better convergence
+        warmup_steps=100,     # More warmup steps
+        weight_decay=0.01,    # Weight decay for regularization
+        gradient_accumulation_steps=4,  # More gradient accumulation for stability
+        fp16=False,           # Disable fp16 for better stability
+        dataloader_pin_memory=False,    # Disable pin memory for better compatibility
+        remove_unused_columns=False,    # Keep all columns
     )
 
     trainer = Trainer(

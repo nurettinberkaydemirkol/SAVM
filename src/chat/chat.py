@@ -4,6 +4,7 @@ import generate_synthetic.generate_synthetic_data as generate_synthetic
 import chat.embed as embed
 from providers.vector_db_provider import VectorDatabaseProvider
 import uuid
+import traceback
 
 from lora_merger.lora_merger import create_ensemble_model_from_search_results, generate_with_ensemble, create_sequential_ensemble
 
@@ -21,7 +22,9 @@ db.load_from_file("./vector_db")
 model, tokenizer = model_provider.get_model_and_tokenizer()
 
 # Example question
-question = "What is capital of France?"
+question = "What is the capital of France?"
+print(f"Question: {question}")
+
 inputs = tokenizer(question, return_tensors="pt")
 inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
@@ -31,7 +34,8 @@ question_vector = embed.create_vector(question)
 # search vector
 k_near_lora_files = db.search(query_vector=question_vector.tolist(), k=3)
 print("k-nearest lora files:")
-print(k_near_lora_files)
+for i, result in enumerate(k_near_lora_files):
+    print(f"  {i+1}. {result.get('file_uri', 'No file URI')}")
 
 print("\n=== Merged Ensemble ===")
 try:
