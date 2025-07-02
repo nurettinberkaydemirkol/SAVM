@@ -2,6 +2,4 @@
 ai_models
 structured_json_outputs.jsonl
 */__pycache__
-lora_files
-synthetic_data_cluster
 embed_models

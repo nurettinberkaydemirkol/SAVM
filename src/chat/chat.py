@@ -5,8 +5,8 @@ import chat.embed as embed
 from providers.vector_db_provider import VectorDatabaseProvider
 import uuid
 import traceback
-
-from lora_merger.lora_merger import create_ensemble_model_from_search_results, generate_with_ensemble, create_sequential_ensemble
+import os
+from lora_merger.lora_merger import merge_lora_and_save, generate_with_merged_model
 
 import torch
 
@@ -37,23 +37,31 @@ print("k-nearest lora files:")
 for i, result in enumerate(k_near_lora_files):
     print(f"  {i+1}. {result.get('file_uri', 'No file URI')}")
 
-print("\n=== Merged Ensemble ===")
-try:
-    local_model_path = "distilgpt2"
-    ensemble_model, tokenizer = create_ensemble_model_from_search_results(k_near_lora_files)
-    answer = generate_with_ensemble(question)
-    print(f"Ensemble Answer: {answer}")
-except Exception as e:
-    print("Ensemble method failed.")
-    traceback.print_exc()
-
 print("\n=== Generating Synthetic Data ===")
-generate_synthetic.generate_synthetic_data(question, 10, output_path=f'/Users/berkaydemirkol/Documents/GitHub/SAVM/synthetic_data_cluster/data-{id}.jsonl')
+synthetic_data_path = f"/Users/berkaydemirkol/Documents/GitHub/SAVM/synthetic_data_cluster/data-{id}.jsonl"
+generate_synthetic.generate_synthetic_data(question, 10, output_path=synthetic_data_path)
 
+# Train LoRA file
+lora_output_dir = f"../lora_files/lora-{id}"
+print(f"Training LoRA and saving to: {lora_output_dir}")
 generated_lora_file = generate_lora.generate_lora(
-    data_file=f'/Users/berkaydemirkol/Documents/GitHub/SAVM/synthetic_data_cluster/data-{id}.jsonl',
-    output_dir=f'../lora_files/lora-{id}'
+    data_file=synthetic_data_path,
+    output_dir=lora_output_dir
 )
+
+# Merge LoRA into base model
+merged_model_dir = f"../merged_models/merged-{id}"
+print(f"Merging LoRA into base model and saving to: {merged_model_dir}")
+merge_lora_and_save(lora_output_dir, merged_model_dir)
+
+# Generate answer from merged model
+print("\n=== Answer from Merged Model ===")
+try:
+    answer = generate_with_merged_model(merged_model_dir, question)
+    print(f"Merged Model Answer: {answer}")
+except Exception as e:
+    print("Failed to generate answer from merged model.")
+    traceback.print_exc()
 
 print("question vector:", question_vector)
 

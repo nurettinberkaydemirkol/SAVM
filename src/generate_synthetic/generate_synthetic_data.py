@@ -13,7 +13,6 @@ def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, ou
 
     with open(output_path, "w", encoding="utf-8") as f:
         for idx in range(1, num_examples + 1):
-            # Better prompt for question generation
             question_prompt = f"Generate a clear, factual question about: {topic}. The question should be specific and answerable. Question:"
             inputs = tokenizer(question_prompt, return_tensors="pt")
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
@@ -36,12 +35,10 @@ def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, ou
             generated = tokenizer.decode(full_output[prompt_len:], skip_special_tokens=True)
             question = generated.split("Question:")[0].strip()
             
-            # Clean up question
             if question.endswith("?"):
                 question = question[:-1].strip()
             question = question + "?"
 
-            # Better prompt for answer generation
             answer_prompt = f"Provide a clear, factual, and concise answer to this question: {question}\nAnswer:"
             inputs = tokenizer(answer_prompt, return_tensors="pt")
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
@@ -64,14 +61,12 @@ def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, ou
             generated = tokenizer.decode(full_output[prompt_len:], skip_special_tokens=True)
             answer = generated.split("Answer:")[0].strip()
             
-            # Clean up answer
             if answer.endswith("."):
                 answer = answer[:-1].strip()
             answer = answer + "."
 
             print(f"[{idx}] Q: {question}\n    A: {answer}")
 
-            # Create proper training format with clear instruction
             json_obj = {
                 "prompt": f"Question: {question}\nAnswer:",
                 "answer": answer
