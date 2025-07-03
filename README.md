@@ -3,7 +3,7 @@
 
 ![SAVM Logo](https://miro.medium.com/v2/resize:fit:1000/format:webp/1*epuDs5ey8xJQET7yJKUqLw.png)
 
-[Medium Blog](https://medium.com/@berkaydemirkol2/seal-self-additive-language-model-2f0c39e4b963)
+[Medium Blog](https://medium.com/@berkaydemirkol/savm-self-additive-vector-model-41c992b2bfc5)
 
 ## 🔍 Summary
 
