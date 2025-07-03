@@ -1,10 +1,10 @@
 import json
-import os
-import providers.model_provider as model_provider
+from lora_merger.lora_merger import get_model_and_tokenizer
+
 from datetime import datetime
 
 def generate_synthetic_data(topic="Machine Learning basics", num_examples=10, output_path=None):
-    model, tokenizer = model_provider.get_model_and_tokenizer()
+    model, tokenizer = get_model_and_tokenizer()
 
     if output_path is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

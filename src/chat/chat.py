@@ -1,4 +1,3 @@
-import providers.model_provider as model_provider
 import generate_lora.generate_lora as generate_lora
 import generate_synthetic.generate_synthetic_data as generate_synthetic
 import chat.embed as embed
@@ -6,7 +5,7 @@ from providers.vector_db_provider import VectorDatabaseProvider
 import uuid
 import traceback
 import os
-from lora_merger.lora_merger import merge_lora_and_save, generate_with_merged_model, merge_multiple_loras_and_save
+from lora_merger.lora_merger import merge_lora_and_save, generate_with_merged_model, merge_multiple_loras_and_save, get_model_and_tokenizer
 
 import torch
 
@@ -19,7 +18,7 @@ db = VectorDatabaseProvider()
 db.load_from_file("./vector_db")
 
 # Generate a question using the model
-model, tokenizer = model_provider.get_model_and_tokenizer()
+model, tokenizer = get_model_and_tokenizer()
 
 # Example question
 question = "Capital city"
