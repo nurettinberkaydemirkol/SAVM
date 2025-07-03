@@ -114,3 +114,33 @@ def generate_with_merged_model(merged_model_path, question, max_new_tokens=150):
     if answer and not answer.endswith((".", "!", "?")):
         answer = answer + "."
     return answer
+
+def merge_multiple_loras_and_save(lora_paths, output_path, base_model_path="distilgpt2"):
+    """
+    Merge multiple LoRA adapters into the base model and save the merged model.
+    Args:
+        lora_paths (list of str): List of paths to LoRA adapter directories.
+        output_path (str): Directory to save the merged model.
+        base_model_path (str): Base model name or path. Default is 'distilgpt2'.
+    """
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from peft import PeftModel
+    import os
+
+    print(f"Loading base model from: {base_model_path}")
+    model = AutoModelForCausalLM.from_pretrained(base_model_path)
+    tokenizer = AutoTokenizer.from_pretrained(base_model_path)
+
+    for lora_path in lora_paths:
+        print(f"Loading LoRA adapter from: {lora_path}")
+        model = PeftModel.from_pretrained(model, lora_path)
+        print(f"Merged LoRA from: {lora_path}")
+
+    print("Merging all LoRA weights into base model...")
+    merged_model = model.merge_and_unload()
+
+    os.makedirs(output_path, exist_ok=True)
+    print(f"Saving merged model to: {output_path}")
+    merged_model.save_pretrained(output_path)
+    tokenizer.save_pretrained(output_path)
+    print("Merge and save complete.")
