@@ -89,8 +89,3 @@ Unlike SEAL, SAVM:
 
 If you have access to high-performance hardware, you're encouraged to try out SAVM and share your results/metrics!
 
----
-
-## 📁 Source Code
-
-Code and examples can be found at the end of the [Medium article](https://medium.com/@berkaydemirkol2/seal-self-additive-language-model-2f0c39e4b963).
