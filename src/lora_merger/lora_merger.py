@@ -131,13 +131,22 @@ def merge_multiple_loras_and_save(lora_paths, output_path, base_model_path="dist
     model = AutoModelForCausalLM.from_pretrained(base_model_path)
     tokenizer = AutoTokenizer.from_pretrained(base_model_path)
 
+    valid_lora_paths = []
     for lora_path in lora_paths:
+        if not lora_path or not os.path.exists(lora_path):
+            print(f"Invalid lora file: {lora_path}. Continue.")
+            continue
         print(f"Loading LoRA adapter from: {lora_path}")
         model = PeftModel.from_pretrained(model, lora_path)
         print(f"Merged LoRA from: {lora_path}")
+        valid_lora_paths.append(lora_path)
 
-    print("Merging all LoRA weights into base model...")
-    merged_model = model.merge_and_unload()
+    if not valid_lora_paths:
+        print("No lora fliie found to merge. Using base model as merged model.")
+        merged_model = model  # Bu durumda model zaten ana model
+    else:
+        print("Merging all LoRA weights into base model...")
+        merged_model = model.merge_and_unload()
 
     os.makedirs(output_path, exist_ok=True)
     print(f"Saving merged model to: {output_path}")

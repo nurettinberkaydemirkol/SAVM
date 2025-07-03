@@ -22,7 +22,7 @@ db.load_from_file("./vector_db")
 model, tokenizer = model_provider.get_model_and_tokenizer()
 
 # Example question
-question = "France's capital city"
+question = "Capital city"
 print(f"Question: {question}")
 
 inputs = tokenizer(question, return_tensors="pt")
