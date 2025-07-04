@@ -143,7 +143,7 @@ def merge_multiple_loras_and_save(lora_paths, output_path, base_model_path="dist
 
     if not valid_lora_paths:
         print("No lora fliie found to merge. Using base model as merged model.")
-        merged_model = model  # Bu durumda model zaten ana model
+        merged_model = model 
     else:
         print("Merging all LoRA weights into base model...")
         merged_model = model.merge_and_unload()
