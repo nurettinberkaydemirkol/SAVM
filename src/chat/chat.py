@@ -27,7 +27,7 @@ print(f"Question: {question}")
 # Generate the question vector using the embed model
 question_vector = embed.create_vector(question)
 
-k_near_lora_files = lora_db.search(query_vector=question_vector.tolist(), k=3)
+k_near_lora_files = lora_db.search(query_vector=question_vector.tolist(), k=3, threshold=0.15)
 print("k-nearest lora files:")
 lora_paths = []
 for i, result in enumerate(k_near_lora_files):
