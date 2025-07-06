@@ -4,18 +4,18 @@ import chat.embed as embed
 from providers.vector_db_provider import VectorDatabaseProvider
 import uuid
 import traceback
-import os
-from lora_merger.lora_merger import merge_lora_and_save, generate_with_merged_model, merge_multiple_loras_and_save, get_model_and_tokenizer
+from lora_merger.lora_merger import generate_with_merged_model, merge_multiple_loras_and_save, get_model_and_tokenizer
 
-import torch
 
 # This script generates a synthetic question-answer pair using a language model,
 id = str(uuid.uuid4())
 
 # embeds it, and stores it in a vector database.
-db = VectorDatabaseProvider()
+lora_db = VectorDatabaseProvider()
+dataset_db = VectorDatabaseProvider()
 
-db.load_from_file("./vector_db")
+lora_db.load_from_file("./db/lora_db")
+dataset_db.load_from_file("./db/dataset_db")
 
 # Generate a question using the model
 model, tokenizer = get_model_and_tokenizer()
@@ -24,13 +24,10 @@ model, tokenizer = get_model_and_tokenizer()
 question = "Capital city"
 print(f"Question: {question}")
 
-inputs = tokenizer(question, return_tensors="pt")
-inputs = {k: v.to(model.device) for k, v in inputs.items()}
-
 # Generate the question vector using the embed model
 question_vector = embed.create_vector(question)
 
-k_near_lora_files = db.search(query_vector=question_vector.tolist(), k=3)
+k_near_lora_files = lora_db.search(query_vector=question_vector.tolist(), k=3)
 print("k-nearest lora files:")
 lora_paths = []
 for i, result in enumerate(k_near_lora_files):
@@ -67,8 +64,8 @@ generated_lora_file = generate_lora.generate_lora(
 )
 
 vector_np = question_vector.squeeze(0).detach().cpu().numpy()
-db.add_or_update(id, vector_np, generated_lora_file)
-db.save_to_file("./vector_db")
+lora_db.add_or_update(id, vector_np, generated_lora_file)
+lora_db.save_to_file("./db/lora_db")
 
-ALL_VECTOR_LIST = db.list_ids()
+ALL_VECTOR_LIST = lora_db.list_ids()
 print(ALL_VECTOR_LIST)

@@ -51,30 +51,33 @@ class VectorDatabaseProvider:
             self.id_order.remove(_id)
             self._rebuild_index()
 
-    def search(self, query_vector: list, k=5):
-        if not self.id_order:
-            return []
+def search(self, query_vector: list, k=5, threshold: float = None):
+    if not self.id_order:
+        return []
 
-        query = np.array(query_vector, dtype='float32').reshape(1, -1)
+    query = np.array(query_vector, dtype='float32').reshape(1, -1)
 
-        if query.shape[1] != self.dim:
-            raise ValueError(f"Sorgu vektörü boyutu {query.shape[1]} ama beklenen {self.dim}")
+    if query.shape[1] != self.dim:
+        raise ValueError(f"Sorgu vektörü boyutu {query.shape[1]} ama beklenen {self.dim}")
 
-        distances, indices = self.index.search(query, k)
+    distances, indices = self.index.search(query, k)
 
-        results = []
-        for dist, idx in zip(distances[0], indices[0]):
-            if idx < len(self.id_order):
-                _id = self.id_order[idx]
-                entry = self.data[_id]
-                results.append({
-                    "id": _id,
-                    "distance": float(dist),
-                    "vector": entry["vector"],
-                    "file_uri": entry["file_uri"]
-                })
-        return results
+    results = []
+    for dist, idx in zip(distances[0], indices[0]):
+        if idx < len(self.id_order):
+            if threshold is not None and dist > threshold:
+                continue
 
+            _id = self.id_order[idx]
+            entry = self.data[_id]
+            results.append({
+                "id": _id,
+                "distance": float(dist),
+                "vector": entry["vector"],
+                "file_uri": entry["file_uri"]
+            })
+
+    return results
     def list_ids(self):
         return list(self.data.keys())
 
