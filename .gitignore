@@ -3,3 +3,8 @@ ai_models
 structured_json_outputs.jsonl
 */__pycache__
 embed_models
+/merged_models
+/lora_files
+/synthetic_data_cluster
+/src/db/dataset_db/*
+/src/db/lora_db/*
